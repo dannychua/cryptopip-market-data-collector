@@ -1,0 +1,73 @@
+version: '3.3'
+services:
+    timescaledb:
+      container_name: cryptopip-timescaledb
+      image: timescale/timescaledb:latest-pg12
+      ports:
+        - 5432:5432
+      environment:
+        - POSTGRES_PASSWORD=PASSWORD
+      volumes:
+        - ./data/timescaledb:/var/lib/postgresql/data
+      restart: always
+      networks:
+        - timescaledb-net
+
+    pgbouncer:
+      container_name: cryptopip-pgbouncer
+      image: edoburu/pgbouncer
+      ports:
+        - 6432:5432
+      environment:
+        - DB_HOST=timescaledb
+        - DB_USER=postgres
+        - DB_PASSWORD=PASSWORD
+        - DB_NAME=ingester_development
+        - MAX_CLIENT_CONN=2000
+        - DEFAULT_POOL_SIZE=50
+        - QUERY_TIMEOUT=300
+      depends_on:
+        - timescaledb
+      networks:
+        - timescaledb-net
+
+    pgadmin:
+        container_name: cryptopip-pgadmin
+        image: dpage/pgadmin4
+        restart: always
+        depends_on:
+        - timescaledb
+        ports:
+        - 5050:80
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@cryptopip.io
+            PGADMIN_DEFAULT_PASSWORD: PASSWORD
+        volumes:
+            - ./data/pgadmin:/root/.pgadmin
+
+    nodeexporter:
+        container_name: cryptopip-nodeexporter
+        image: prom/node-exporter:v0.18.1
+        volumes:
+          - /proc:/host/proc:ro
+          - /sys:/host/sys:ro
+          - /:/rootfs:ro
+        command:
+          - '--path.procfs=/host/proc'
+          - '--path.rootfs=/rootfs'
+          - '--path.sysfs=/host/sys'
+          - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+        restart: unless-stopped
+        ports:
+          - 9100:9100
+
+    zfsexporter:
+        container_name: cryptopip-zfsexporter
+        image: derekgottlieb/zfs-exporter
+        restart: unless-stopped
+        privileged: true
+        ports:
+          - 9254:9254
+
+networks:
+  timescaledb-net:

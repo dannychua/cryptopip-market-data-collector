@@ -1,0 +1,115 @@
+version: '3.3'
+services:
+    timescaledb:
+      container_name: cryptopip-timescaledb
+      image: timescale/timescaledb:latest-pg12
+      ports:
+        - 5432:5432
+      environment:
+        - POSTGRES_PASSWORD=PASSWORD
+        - POSTGRES_INITDB_WALDIR=/var/lib/postgresql/data/pg_wal
+        - PGDATA=/var/lib/postgresql/data/pg_data
+      # command: -cwal_level=archive -carchive_mode=on -carchive_command="/usr/bin/wget wale/wal-push/%f -O -" -carchive_timeout=600 -ccheckpoint_timeout=700 -cmax_wal_senders=1
+      volumes:
+        - ./data/timescaledb:/var/lib/postgresql/data
+        # - /tank/db/timescaledb:/var/lib/postgresql/data
+        # - /tank/db/backups-pgdump:/backups
+      restart: always
+      networks:
+        - timescaledb-net
+
+    pgbouncer:
+      container_name: cryptopip-pgbouncer
+      image: edoburu/pgbouncer
+      ports:
+        - 6432:5432
+      environment:
+        - DB_HOST=timescaledb
+        - DB_USER=postgres
+        - DB_PASSWORD=PASSWORD
+        - DB_NAME=datalake_development
+        - MAX_CLIENT_CONN=2000
+        - DEFAULT_POOL_SIZE=50
+        - QUERY_TIMEOUT=300
+      depends_on:
+        - timescaledb
+      networks:
+        - timescaledb-net
+        
+    # wale:
+    #   container_name: cryptopip-wale
+    #   image: timescale/timescaledb-wale:latest
+    #   environment:
+    #     - WALE_LOG_DESTINATION=stderr
+    #     - PGWAL=/var/lib/postgresql/data/pg_wal
+    #     - PGDATA=/var/lib/postgresql/data/pg_data
+    #     - PGHOST=timescaledb
+    #     - PGPASSWORD=PASSWORD
+    #     - PGUSER=postgres
+    #     - WALE_FILE_PREFIX=file://localhost/backups
+    #   restart: always
+    #   volumes:
+    #     # - ./data/backups:/backups
+    #     # - ./data/timescaledb:/var/lib/postgresql/data
+    #     - /tank/db/backups:/backups
+    #     - /tank/db/timescaledb:/var/lib/postgresql/data
+    #   networks:
+    #     - timescaledb-net
+    #   depends_on:
+    #     - timescaledb
+      
+    pgadmin:
+        container_name: cryptopip-pgadmin
+        image: dpage/pgadmin4
+        restart: always
+        depends_on:
+        - timescaledb
+        ports:
+        - 5050:80
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@cryptopip.io
+            PGADMIN_DEFAULT_PASSWORD: PASSWORD
+        volumes:
+            - ./data/pgadmin:/root/.pgadmin
+
+    nodeexporter:
+        container_name: cryptopip-nodeexporter
+        image: prom/node-exporter:v0.18.1
+        volumes:
+          - /proc:/host/proc:ro
+          - /sys:/host/sys:ro
+          - /:/rootfs:ro
+        command:
+          - '--path.procfs=/host/proc'
+          - '--path.rootfs=/rootfs'
+          - '--path.sysfs=/host/sys'
+          - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+        restart: always
+        ports:
+          - 9100:9100
+
+    zfsexporter:
+        container_name: cryptopip-zfsexporter
+        image: derekgottlieb/zfs-exporter
+        restart: unless-stopped
+        privileged: true
+        ports:
+          - 9254:9254
+
+    redis:
+      container_name: cryptopip-redis
+      image: 'bitnami/redis:5.0'
+      environment:
+        # ALLOW_EMPTY_PASSWORD is recommended only for development.
+        # - ALLOW_EMPTY_PASSWORD=yes
+        # - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+      ports:
+        - '6379:6379'
+      restart: always
+      volumes:
+        - './data/redis:/bitnami/redis/data'
+      environment:
+        - REDIS_PASSWORD=PASSWORD
+
+networks:
+  timescaledb-net:

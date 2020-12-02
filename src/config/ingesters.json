@@ -1,0 +1,26 @@
+{
+  "ingester-1": {
+    "username": "postgres",
+    "password": "PASSWORD",
+    "database": "datalake_development",
+    "host": "199.255.137.23",
+    "dialect": "postgres",
+    "operatorsAliases": "0",
+    "logging": false,
+    "define": {
+      "timestamps": false
+    }
+  }, 
+  "ingester-2": {
+    "username": "postgres",
+    "password": "PASSWORD",
+    "database": "datalake_development",
+    "host": "144.172.126.63",
+    "dialect": "postgres",
+    "operatorsAliases": "0",
+    "logging": false,
+    "define": {
+      "timestamps": false
+    }
+  }
+}

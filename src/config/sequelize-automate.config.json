@@ -1,0 +1,13 @@
+{
+  "dbOptions": {
+    "pool": {
+      "max": 5,
+      "min": 0,
+      "acquire": 600000,
+      "idle": 10000
+    }
+  },
+  "options": {
+    "skipTables": ["SequelizeMeta"]
+  }
+}

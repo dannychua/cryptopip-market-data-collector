@@ -1,0 +1,177 @@
+- hosts: all
+  become: true
+  become_user: root
+  become_method: su
+  become_exe: 'sudo -p "Password: " su -'
+  tasks:
+
+  - name: Ensure UTF-8 support in .bashrc
+    blockinfile:
+      dest: '~/.bashrc'
+      block: |
+        export LC_ALL=en_US.UTF-8
+        export LANG=en_US.UTF-8
+        export LANGUAGE=en_US.UTF-8
+      state: present
+    become: false
+
+  # source ~/.bashrc
+  - name: Source ~/.bashrc
+    shell: source ~/.bashrc
+    args:
+      executable: /bin/bash
+    become: false
+  
+  # sudo apt update && sudo apt upgrade -y
+  - name: Update package list and upgrade packages
+    apt: 
+      update_cache: yes
+      upgrade: 'yes'
+      cache_valid_time: 86400   # 1 day
+
+  # sudo apt install ...
+  - name: Install packages
+    apt: 
+      name: ['htop', 'iotop', 'iftop', 'sysstat', 'vnstat', 'net-tools', 'traceroute', 'curl', 'screen', 'postgresql-client', 'pigz', 'zfsutils-linux']
+      state: present
+    
+  # Manual vnstat setup
+  # sudo vnstat -u -i eth0 
+  # sudo systemctl start vnstat.service
+  # sudo systemctl enable vnstat.service
+
+  # Alternative nodejs install:
+  #   curl -sL https://deb.nodesource.com/setup_{{ NODEJS_VERSION }}.x | sudo -E bash && sudo apt install nodejs
+
+  # curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add -
+  - name: Install GPG key for Nodejs
+    apt_key:
+      url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+      state: present
+
+  # sudo add-apt-repository "deb [arch=amd64] https://deb.nodesource.com/node_12.x bionic main"
+  - name: Install Nodejs repository
+    apt_repository:
+      repo: "deb https://deb.nodesource.com/node_{{ NODEJS_VERSION }}.x {{ ansible_distribution_release }} main"
+      state: present
+  
+  # sudo apt install nodejs
+  - name: Install Nodejs
+    apt:
+      name: nodejs
+      state: present
+      update_cache: yes
+
+  # sudo apt install gcc g++ make
+  - name: Install Nodejs dependencies
+    apt: 
+      name: ['gcc', 'g++', 'make']
+      state: present
+
+  # curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - name: Add Docker GPG apt key
+    apt_key:
+      id: 0EBFCD88
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  # sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+  - name: Add Docker repository
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+      state: present
+
+  # sudo apt-get install docker-ce
+  - name: Install Docker
+    apt: 
+      name: docker-ce 
+      state: present
+      update_cache: yes
+
+  # sudo groupadd docker
+  - name: Add "docker" group
+    group: 
+      name: docker
+      state: present
+
+  # sudo usermod -aG docker <DOCKER_USER>
+  - name: Add remote user to "docker" group
+    user:
+      name: "{{ DOCKER_USER }}"
+      group: docker
+      append: yes
+
+  # sudo apt-get install docker-compose
+  - name: Install docker-compose
+    apt:
+      name: docker-compose
+      state: present
+      update_cache: yes
+
+  # - name: Check if rclone is already installed
+  - stat: 
+      path: /usr/bin/rclone
+    register: rclone_installed
+
+  # curl https://rclone.org/install.sh | sudo bash
+  - name: Install rclone (stable)
+    shell: curl https://rclone.org/install.sh | sudo bash
+    when: rclone_installed.stat.exists == false
+
+  # mkdir -p ~/.config/rclone
+  - name: Ensure ~/.config/rclone directory exists
+    file:
+      path: ~/.config/rclone
+      state: directory
+    become: false
+
+  - name: Copy rclone.conf
+    copy:
+      src: files/rclone/rclone.conf
+      dest: ~/.config/rclone/rclone.conf
+    become: false  
+  
+  - name: Copy fuse.conf
+    copy:
+      src: files/rclone/fuse.conf
+      dest: /etc/fuse.conf
+
+  # curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+  - name: Install GPG key for PostgreSQL
+    apt_key:
+      url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+      state: present
+
+  - name: Copy /etc/apt/sources.list.d/pgdg.list
+    template:
+      src: files/pgdg.list.j2
+      dest: /etc/apt/sources.list.d/pgdg.list
+
+  # sudo apt-get install postgresql-client-12
+  - name: Install postgresql-client-12
+    apt: 
+      name: postgresql-client-12
+      state: present
+      update_cache: yes
+    
+  # # apt install barman
+  # - name: Install barman
+  #   apt: 
+  #     name: ['barman']
+  #     state: present
+  
+  # # sudo useradd barman && sudo usermod -aG sudo barman
+  # - name: Add the user 'barman'
+  #   user:
+  #     name: barman
+  #     group: sudo
+  
+  # - name: Copy /etc/barman.conf
+  #   copy:
+  #     src: files/barman/barman.conf
+  #     dest: /etc/barman.conf
+  
+  # - name: Copy /etc/barman.d/pgsql.conf
+  #   copy:
+  #     src: files/barman/pgsql.conf
+  #     dest: /etc/barman.d/pgsql.conf

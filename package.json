@@ -1,0 +1,40 @@
+{
+  "name": "cryptopip",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@elastic/elasticsearch": "^7.8.0",
+    "bull": "^3.15.0",
+    "ccxt": "^1.30.59",
+    "ccxt.pro": "git+https://f849a0a926914e85ce569855dc7e090ec2ad13cc:x-oauth-basic@github.com/kroitor/ccxt.pro.git",
+    "ccxws": "^0.29.6",
+    "columnify": "^1.5.4",
+    "commander": "^5.1.0",
+    "knex": "^0.21.1",
+    "lodash": "^4.17.15",
+    "moment": "^2.27.0",
+    "moment-range": "^4.0.2",
+    "p-limit": "^2.3.0",
+    "perfy": "^1.1.5",
+    "pg": "^8.2.1",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^5.22.3",
+    "socket.io": "^2.3.0",
+    "socket.io-client": "^2.3.0",
+    "squel": "^5.13.0",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.0",
+    "winston-elasticsearch": "^0.8.6"
+  },
+  "devDependencies": {
+    "sequelize-automate": "^1.2.2",
+    "sequelize-cli": "^5.5.1"
+  }
+}

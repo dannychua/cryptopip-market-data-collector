@@ -1,0 +1,36 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "PASSWORD",
+    "database": "datalake_development",
+    "host": "127.0.0.1",
+    "dialect": "postgres",
+    "operatorsAliases": "0",
+    "logging": false,
+    "define": {
+      "timestamps": false
+    }
+  },
+  "staging": {
+    "username": "postgres",
+    "password": "password",
+    "database": "datalake_test",
+    "host": "127.0.0.1",
+    "dialect": "postgres",
+    "operatorsAliases": "0",
+    "define": {
+      "timestamps": false
+    }
+  },
+  "production": {
+    "username": "postgres",
+    "password": "password",
+    "database": "datalake_production",
+    "host": "127.0.0.1",
+    "dialect": "postgres",
+    "operatorsAliases": "0",
+    "define": {
+      "timestamps": false
+    }
+  }
+}
